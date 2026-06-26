@@ -31,7 +31,16 @@ export async function getArtworks() {
       | order(coalesce(order, 0) asc, _createdAt desc) {
         _id,
         name,
-        image,
+        image {
+          ...,
+          "assetMetadata": asset->metadata {
+            dimensions {
+              width,
+              height,
+              aspectRatio
+            }
+          }
+        },
         order
       }
   `);

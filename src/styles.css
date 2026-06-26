@@ -513,6 +513,10 @@ small {
   grid-column: span 2;
 }
 
+.gallery-item.landscape {
+  grid-column: span 2;
+}
+
 .gallery-item figcaption {
   display: flex;
   justify-content: space-between;
@@ -550,22 +554,6 @@ small {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.artwork-frame.portrait {
-  aspect-ratio: 4 / 5;
-}
-
-.artwork-frame.tall {
-  aspect-ratio: 3 / 5;
-}
-
-.artwork-frame.wide {
-  aspect-ratio: 16 / 9;
-}
-
-.artwork-frame.square {
-  aspect-ratio: 1 / 1;
 }
 
 .collections-scroll {
@@ -891,7 +879,8 @@ small {
   }
 
   .atelier-strip .media-slot:first-child,
-  .gallery-item.wide {
+  .gallery-item.wide,
+  .gallery-item.landscape {
     grid-column: auto;
   }
 

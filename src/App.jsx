@@ -56,8 +56,6 @@ const fallbackGalleryItems = [
   ["Obra 09", "Peça especial", "portrait"],
 ];
 
-const galleryShapes = ["portrait", "tall", "wide", "portrait", "square", "tall"];
-
 const matarazzoPlan = [
   ["Ambiente", "Fotos amplas do espaço, circulação e instalação."],
   ["Obras", "Registros finais das telas e detalhes de textura."],
@@ -206,21 +204,38 @@ function MediaSlot({ label, shape = "square", tone = "warm" }) {
   );
 }
 
-function ArtworkImage({ image, name, shape, index }) {
-  const imageUrl = urlFor(image)?.width(900).quality(80).url();
+function getArtworkLayout(image) {
+  const dimensions = image?.assetMetadata?.dimensions || image?.asset?.metadata?.dimensions;
+  const width = dimensions?.width;
+  const height = dimensions?.height;
+  const ratio = dimensions?.aspectRatio || (width && height ? width / height : null);
+
+  if (!ratio) {
+    return { orientation: "square", aspectRatio: undefined };
+  }
+
+  return {
+    orientation: ratio > 1.18 ? "landscape" : ratio < 0.86 ? "portrait" : "square",
+    aspectRatio: width && height ? `${width} / ${height}` : `${ratio} / 1`,
+  };
+}
+
+function ArtworkImage({ image, name, index }) {
+  const { orientation, aspectRatio } = getArtworkLayout(image);
+  const imageUrl = urlFor(image)?.width(1200).quality(82).url();
 
   if (!imageUrl) {
     return (
       <MediaSlot
         label={name || "obra"}
-        shape={shape}
+        shape="square"
         tone={index % 3 === 0 ? "warm" : index % 3 === 1 ? "cool" : "green"}
       />
     );
   }
 
   return (
-    <div className={`artwork-frame ${shape}`}>
+    <div className={`artwork-frame ${orientation}`} style={aspectRatio ? { aspectRatio } : undefined}>
       <img src={imageUrl} alt={name} loading="lazy" decoding="async" />
     </div>
   );
@@ -376,11 +391,11 @@ function Gallery() {
                 </Reveal>
               ))
             : artworks.map((artwork, index) => {
-                const shape = galleryShapes[index % galleryShapes.length];
+                const { orientation } = getArtworkLayout(artwork.image);
 
                 return (
-                  <Reveal as="figure" className={`gallery-item ${shape}`} key={artwork._id} delay={(index % 4) * 0.04}>
-                    <ArtworkImage image={artwork.image} name={artwork.name} shape={shape} index={index} />
+                  <Reveal as="figure" className={`gallery-item ${orientation}`} key={artwork._id} delay={(index % 4) * 0.04}>
+                    <ArtworkImage image={artwork.image} name={artwork.name} index={index} />
                     <figcaption>
                       <strong>{artwork.name}</strong>
                       <span>{String(index + 1).padStart(2, "0")}</span>
