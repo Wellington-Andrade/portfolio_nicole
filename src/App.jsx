@@ -2,11 +2,25 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
+  useMotionTemplate,
   useScroll,
   useSpring,
   useTransform,
 } from "motion/react";
-import { getArtworks, hasSanityConfig, urlFor } from "./lib/sanityClient.js";
+import {
+  BrowserRouter,
+  Link,
+  NavLink,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
+import {
+  getArtworks,
+  getFeaturedArtwork,
+  hasSanityConfig,
+  urlFor,
+} from "./lib/sanityClient.js";
 
 const navItems = [
   ["sobre", "Sobre"],
@@ -15,6 +29,14 @@ const navItems = [
   ["matarazzo", "Matarazzo"],
   ["extras", "Extras"],
   ["contato", "Contato"],
+];
+
+const pageNavItems = [
+  ["/", "Início"],
+  ["/galeria", "Galeria"],
+  ["/#matarazzo", "Matarazzo"],
+  ["/colecoes", "Coleções"],
+  ["/extras", "Extras"],
 ];
 
 const collections = [
@@ -92,6 +114,29 @@ function ProgressBar() {
   });
 
   return <motion.div className="progress-bar" style={{ scaleX }} />;
+}
+
+function FluidBackdrop() {
+  const shouldReduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll();
+  const y = useTransform(scrollYProgress, [0, 1], ["-7%", "7%"]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1.08, 1.18]);
+  const rotate = useTransform(scrollYProgress, [0, 1], [-1.5, 1.5]);
+  const hue = useTransform(scrollYProgress, [0, 1], [0, 18]);
+  const filter = useMotionTemplate`blur(22px) saturate(1.34) hue-rotate(${hue}deg)`;
+
+  return (
+    <motion.div
+      className="fluid-backdrop"
+      style={shouldReduceMotion ? undefined : { y, scale, rotate, filter }}
+      aria-hidden="true"
+    >
+      <video autoPlay muted loop playsInline preload="auto">
+        <source src="/assets/m2-res_404p.mp4" type="video/mp4" />
+      </video>
+      <div className="fluid-backdrop-wash" />
+    </motion.div>
+  );
 }
 
 function Reveal({ children, className = "", delay = 0, as = "div" }) {
@@ -267,24 +312,132 @@ function splitIntoColumns(items, columnCount) {
   return columns;
 }
 
+function useArtworksData() {
+  const [artworks, setArtworks] = useState([]);
+  const [loading, setLoading] = useState(hasSanityConfig);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!hasSanityConfig) return;
+
+    let isMounted = true;
+
+    async function loadArtworks() {
+      try {
+        const data = await getArtworks();
+        if (isMounted) setArtworks(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+        if (isMounted) setError("Não foi possível carregar as obras.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadArtworks();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return { artworks, loading, error };
+}
+
+function useFeaturedArtwork() {
+  const [artwork, setArtwork] = useState(null);
+  const [loading, setLoading] = useState(hasSanityConfig);
+
+  useEffect(() => {
+    if (!hasSanityConfig) return;
+
+    let isMounted = true;
+
+    async function loadFeaturedArtwork() {
+      try {
+        const data = await getFeaturedArtwork();
+        if (isMounted) setArtwork(data || null);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadFeaturedArtwork();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return { artwork, loading };
+}
+
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    window.requestAnimationFrame(() => {
+      if (hash) {
+        document.getElementById(hash.replace("#", ""))?.scrollIntoView({ block: "start" });
+        return;
+      }
+
+      window.scrollTo({ top: 0, left: 0 });
+    });
+  }, [pathname, hash]);
+
+  return null;
+}
+
 function Nav() {
   return (
     <nav className="site-nav" aria-label="Navegação principal">
-      <a className="nav-brand" href="#inicio">
+      <Link className="nav-brand" to="/">
         Nicole Kvsh
-      </a>
+      </Link>
       <div className="nav-links">
-        {navItems.map(([href, label]) => (
-          <a key={href} href={`#${href}`}>
+        {pageNavItems.map(([href, label]) => (
+          <NavLink key={href} to={href} end={href === "/"}>
             {label}
-          </a>
+          </NavLink>
         ))}
+        <a href="#contato">Contato</a>
       </div>
     </nav>
   );
 }
 
-function Hero() {
+function FeaturedArtwork({ artwork, loading }) {
+  const imageUrl = artwork?.image ? urlFor(artwork.image)?.width(1100).quality(84).url() : null;
+
+  if (imageUrl) {
+    return (
+      <>
+        <div className="featured-artwork">
+          <img src={imageUrl} alt={artwork.name} loading="eager" decoding="async" />
+        </div>
+        <div className="hero-note">
+          <span>Obra destaque</span>
+          <p>{artwork.name}</p>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <MediaSlot label={loading ? "carregando" : "obra destaque"} shape="portrait" tone="cool" />
+      <div className="hero-note">
+        <span>{loading ? "Buscando destaque" : "Arquivo em construção"}</span>
+        <p>Marque uma obra como destaque no Sanity para ocupar este espaço.</p>
+      </div>
+    </>
+  );
+}
+
+function Hero({ featuredArtwork, featuredLoading }) {
   return (
     <header id="inicio" className="hero">
       <FluidHero />
@@ -297,9 +450,9 @@ function Hero() {
             para receber as obras finais.
           </p>
           <div className="hero-actions" aria-label="Ações principais">
-            <a className="button primary" href="#galeria">
+            <Link className="button primary" to="/galeria">
               Ver galeria
-            </a>
+            </Link>
             <a className="button" href="#matarazzo">
               Projeto Matarazzo
             </a>
@@ -307,6 +460,9 @@ function Hero() {
         </Reveal>
       </div>
       <Reveal className="hero-panel" delay={0.12}>
+        <div className="featured-artwork-shell">
+          <FeaturedArtwork artwork={featuredArtwork} loading={featuredLoading} />
+        </div>
         <MediaSlot label="obra destaque" shape="portrait" tone="cool" />
         <div className="hero-note">
           <span>Arquivo em construção</span>
@@ -563,6 +719,165 @@ function Extras() {
   );
 }
 
+function PageIntro({ eyebrow, title, text }) {
+  return (
+    <header className="page-intro">
+      <Reveal>
+        <p className="eyebrow">{eyebrow}</p>
+        <h1>{title}</h1>
+      </Reveal>
+      <Reveal className="page-intro-copy" delay={0.08}>
+        <p>{text}</p>
+      </Reveal>
+    </header>
+  );
+}
+
+function HomeGalleryPreview() {
+  const { artworks, loading, error } = useArtworksData();
+  const previewArtworks = artworks.slice(0, 4);
+  const useFallback = !hasSanityConfig || (!loading && !error && previewArtworks.length === 0);
+
+  return (
+    <section className="section home-preview">
+      <div className="section-heading">
+        <Reveal>
+          <p className="eyebrow">Galeria</p>
+          <h2>Primeiro recorte do acervo.</h2>
+        </Reveal>
+        <Reveal className="section-aside" delay={0.08}>
+          <p>Uma seleção curta para a página inicial. O acervo completo fica em uma página própria.</p>
+          <Link className="text-link" to="/galeria">Ver galeria completa</Link>
+        </Reveal>
+      </div>
+
+      <div className="preview-grid">
+        {useFallback
+          ? fallbackGalleryItems.slice(0, 4).map(([label, title, shape], index) => (
+              <Reveal as="figure" className="preview-item" key={label} delay={index * 0.04}>
+                <MediaSlot label={label} shape={shape} tone={index % 2 ? "cool" : "warm"} />
+                <figcaption>{title}</figcaption>
+              </Reveal>
+            ))
+          : previewArtworks.map((artwork, index) => (
+              <Reveal as="figure" className="preview-item" key={artwork._id} delay={index * 0.04}>
+                <ArtworkImage image={artwork.image} name={artwork.name} index={index} />
+                <figcaption>{artwork.name}</figcaption>
+              </Reveal>
+            ))}
+      </div>
+    </section>
+  );
+}
+
+function HomeCollectionsPreview() {
+  return (
+    <section className="section home-preview">
+      <div className="section-heading">
+        <Reveal>
+          <p className="eyebrow">Coleções</p>
+          <h2>Séries para entrar com calma.</h2>
+        </Reveal>
+        <Reveal className="section-aside" delay={0.08}>
+          <p>Um resumo das frentes de trabalho. A página de coleções organiza cada série com mais respiro.</p>
+          <Link className="text-link" to="/colecoes">Ver coleções</Link>
+        </Reveal>
+      </div>
+      <div className="preview-collection-row">
+        {collections.slice(0, 3).map((collection, index) => (
+          <Reveal as="article" className="collection-card compact" key={collection.title} delay={index * 0.05}>
+            <MediaSlot label={collection.title} shape={index === 1 ? "wide" : "square"} tone={index % 2 ? "rose" : "green"} />
+            <div>
+              <span>{collection.year}</span>
+              <h3>{collection.title}</h3>
+              <p>{collection.note}</p>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HomeExtrasPreview() {
+  return (
+    <section className="section home-preview">
+      <div className="section-heading">
+        <Reveal>
+          <p className="eyebrow">Extras</p>
+          <h2>Vídeos, entrevistas e presenças.</h2>
+        </Reveal>
+        <Reveal className="section-aside" delay={0.08}>
+          <p>Um espaço de arquivo para participações, campanhas, registros e materiais fora da galeria.</p>
+          <Link className="text-link" to="/extras">Ver extras</Link>
+        </Reveal>
+      </div>
+      <div className="extras-grid compact">
+        {extras.entrevistas.slice(0, 3).map((item, index) => (
+          <Reveal as="article" className="extra-item" key={item} delay={index * 0.05}>
+            <MediaSlot label={item} shape={index === 0 ? "wide" : "portrait"} tone={index % 2 ? "rose" : "cool"} />
+            <h3>{item}</h3>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HomePage() {
+  const { artwork, loading } = useFeaturedArtwork();
+
+  return (
+    <main id="conteudo">
+      <Hero featuredArtwork={artwork} featuredLoading={loading} />
+      <Intro />
+      <HomeGalleryPreview />
+      <HomeCollectionsPreview />
+      <Matarazzo />
+      <HomeExtrasPreview />
+    </main>
+  );
+}
+
+function GalleryPage() {
+  return (
+    <main id="conteudo" className="page-main">
+      <PageIntro
+        eyebrow="Galeria"
+        title="Obras"
+        text="Acervo em expansão, carregado diretamente do Sanity. Novas obras publicadas entram aqui sem mexer no código."
+      />
+      <Gallery />
+    </main>
+  );
+}
+
+function CollectionsPage() {
+  return (
+    <main id="conteudo" className="page-main">
+      <PageIntro
+        eyebrow="Coleções"
+        title="Séries de trabalho"
+        text="Organização por coleções, com espaço para expandir cada série conforme o acervo for sendo cadastrado."
+      />
+      <Collections />
+    </main>
+  );
+}
+
+function ExtrasPage() {
+  return (
+    <main id="conteudo" className="page-main">
+      <PageIntro
+        eyebrow="Extras"
+        title="Entrevistas e vídeos"
+        text="Materiais complementares: entrevistas, campanhas, registros de ateliê e aparições em outros contextos."
+      />
+      <Extras />
+    </main>
+  );
+}
+
 function Contact() {
   return (
     <footer id="contato" className="contact-section">
@@ -575,44 +890,30 @@ function Contact() {
         <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">
           Instagram
         </a>
-        <a href="#inicio">Voltar ao topo</a>
+        <Link to="/">Voltar ao início</Link>
       </Reveal>
     </footer>
   );
 }
 
 export default function App() {
-  useEffect(() => {
-    const scrollToHash = () => {
-      const id = window.location.hash.replace("#", "");
-      if (!id) return;
-
-      window.requestAnimationFrame(() => {
-        document.getElementById(id)?.scrollIntoView({ block: "start" });
-      });
-    };
-
-    scrollToHash();
-    window.addEventListener("hashchange", scrollToHash);
-    return () => window.removeEventListener("hashchange", scrollToHash);
-  }, []);
-
   return (
-    <>
+    <BrowserRouter>
       <ProgressBar />
-      <a className="skip-link" href="#sobre">
+      <FluidBackdrop />
+      <a className="skip-link" href="#conteudo">
         Pular para o conteúdo
       </a>
+      <ScrollToTop />
       <Nav />
-      <main>
-        <Hero />
-        <Intro />
-        <Gallery />
-        <Collections />
-        <Matarazzo />
-        <Extras />
-      </main>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/galeria" element={<GalleryPage />} />
+        <Route path="/colecoes" element={<CollectionsPage />} />
+        <Route path="/extras" element={<ExtrasPage />} />
+        <Route path="*" element={<HomePage />} />
+      </Routes>
       <Contact />
-    </>
+    </BrowserRouter>
   );
 }

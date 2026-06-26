@@ -34,3 +34,21 @@ http://127.0.0.1:5500
 ```
 
 O site não usa token privado no frontend e não usa nenhuma imagem do `Portifolio experimental`; as mídias de fallback são espaços visuais provisórios.
+
+## Produção
+
+No Vercel, configure as mesmas variáveis do `.env` local:
+
+```env
+VITE_SANITY_PROJECT_ID=tvqjz8gn
+VITE_SANITY_DATASET=production
+VITE_SANITY_API_VERSION=2026-06-26
+```
+
+Depois do deploy, copie o domínio final do site e adicione esse domínio em **Sanity > API > CORS origins**. Exemplo:
+
+```text
+https://seu-dominio.vercel.app
+```
+
+O arquivo `vercel.json` mantém as rotas internas do React funcionando em produção, como `/galeria`, `/colecoes` e `/extras`.

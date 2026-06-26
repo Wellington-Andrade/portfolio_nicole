@@ -62,6 +62,12 @@ body::before {
   pointer-events: none;
 }
 
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+}
+
 button,
 input,
 textarea,
@@ -153,6 +159,31 @@ small {
   transform-origin: 0 50%;
 }
 
+.fluid-backdrop {
+  position: fixed;
+  inset: -10vmax;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.fluid-backdrop video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.16);
+}
+
+.fluid-backdrop-wash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 28% 16%, rgba(255, 253, 247, 0.34), transparent 30%),
+    radial-gradient(circle at 72% 68%, rgba(239, 196, 71, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(247, 245, 238, 0.86), rgba(247, 245, 238, 0.97));
+}
+
 .site-nav {
   position: sticky;
   top: 0;
@@ -194,6 +225,12 @@ small {
 .nav-links a:hover {
   border-color: var(--ink);
   color: var(--ink);
+}
+
+main,
+.contact-section {
+  position: relative;
+  z-index: 1;
 }
 
 .hero {
@@ -296,6 +333,37 @@ small {
   min-height: 560px;
   align-content: end;
   gap: 14px;
+}
+
+.hero-panel > .media-slot,
+.hero-panel > .hero-note {
+  display: none;
+}
+
+.featured-artwork-shell {
+  display: grid;
+  gap: 14px;
+}
+
+.featured-artwork {
+  display: grid;
+  min-height: min(64vh, 620px);
+  place-items: center;
+  padding: clamp(10px, 2vw, 18px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(255, 253, 247, 0.72), rgba(237, 244, 242, 0.34)),
+    rgba(255, 253, 247, 0.48);
+  overflow: hidden;
+  box-shadow: 0 28px 80px rgba(23, 19, 15, 0.12);
+  backdrop-filter: blur(14px);
+}
+
+.featured-artwork img {
+  width: 100%;
+  max-height: min(60vh, 580px);
+  object-fit: contain;
 }
 
 .hero-note {
@@ -579,8 +647,9 @@ small {
 }
 
 .collections-heading h2 {
-  max-width: 14ch;
+  max-width: 10ch;
   margin-top: 8px;
+  font-size: clamp(3rem, 6vw, 5.7rem);
 }
 
 .collections-track {
@@ -753,6 +822,95 @@ small {
   font-size: clamp(1.3rem, 2.6vw, 2.1rem);
 }
 
+.page-main {
+  padding-top: clamp(24px, 5vw, 58px);
+}
+
+.page-intro {
+  display: grid;
+  width: min(100%, var(--max));
+  grid-template-columns: minmax(0, 0.92fr) minmax(260px, 0.48fr);
+  gap: clamp(24px, 6vw, 82px);
+  align-items: end;
+  margin: 0 auto;
+  padding: clamp(34px, 6vw, 76px) var(--pad) clamp(8px, 2vw, 28px);
+}
+
+.page-intro h1 {
+  max-width: 10ch;
+  margin-top: 8px;
+  font-size: clamp(3.8rem, 9vw, 7.6rem);
+}
+
+.page-intro-copy {
+  padding-bottom: 10px;
+}
+
+.page-intro-copy p {
+  max-width: 520px;
+}
+
+.home-preview {
+  padding-top: clamp(64px, 9vw, 128px);
+  padding-bottom: clamp(64px, 9vw, 128px);
+}
+
+.text-link {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 16px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--ink);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.preview-grid,
+.preview-collection-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.preview-collection-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.preview-item {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.preview-item .media-slot {
+  min-height: 240px;
+}
+
+.preview-item figcaption {
+  font-weight: 800;
+}
+
+.preview-item .artwork-frame {
+  background: rgba(255, 253, 247, 0.58);
+}
+
+.collection-card.compact {
+  width: auto;
+  min-width: 0;
+}
+
+.collection-card.compact .media-slot {
+  min-height: 220px;
+}
+
+.extras-grid.compact {
+  grid-template-columns: 1.2fr 0.9fr 0.9fr;
+}
+
 .contact-section {
   display: grid;
   grid-template-columns: minmax(0, 0.78fr) minmax(260px, 0.7fr);
@@ -800,6 +958,7 @@ small {
   .intro-section,
   .section-heading,
   .matarazzo-section,
+  .page-intro,
   .contact-section {
     grid-template-columns: 1fr;
   }
@@ -823,6 +982,12 @@ small {
 
   .gallery-grid {
     gap: 12px;
+  }
+
+  .preview-grid,
+  .preview-collection-row,
+  .extras-grid.compact {
+    grid-template-columns: 1fr 1fr;
   }
 
   .matarazzo-copy {
@@ -870,7 +1035,10 @@ small {
 
   .atelier-strip,
   .matarazzo-grid,
-  .extras-grid {
+  .extras-grid,
+  .preview-grid,
+  .preview-collection-row,
+  .extras-grid.compact {
     grid-template-columns: 1fr;
   }
 

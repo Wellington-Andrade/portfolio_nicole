@@ -31,6 +31,31 @@ export async function getArtworks() {
       | order(coalesce(order, 0) asc, _createdAt desc) {
         _id,
         name,
+        featured,
+        image {
+          ...,
+          "assetMetadata": asset->metadata {
+            dimensions {
+              width,
+              height,
+              aspectRatio
+            }
+          }
+        },
+        order
+      }
+  `);
+}
+
+export async function getFeaturedArtwork() {
+  if (!sanityClient) return null;
+
+  return sanityClient.fetch(`
+    *[_type == "artwork" && published == true]
+      | order(featured desc, coalesce(order, 0) asc, _createdAt desc)[0] {
+        _id,
+        name,
+        featured,
         image {
           ...,
           "assetMetadata": asset->metadata {
