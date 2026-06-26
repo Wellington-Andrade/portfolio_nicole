@@ -159,67 +159,6 @@ small {
   transform-origin: 0 50%;
 }
 
-.fluid-backdrop {
-  position: fixed;
-  inset: -18vmax;
-  z-index: 0;
-  overflow: hidden;
-  opacity: 1;
-  pointer-events: none;
-}
-
-.fluid-layer {
-  position: absolute;
-  width: 78vmax;
-  height: 58vmax;
-  border-radius: 48% 52% 44% 56% / 52% 38% 62% 48%;
-  mix-blend-mode: multiply;
-  opacity: 0.58;
-  transform-origin: center;
-}
-
-.fluid-layer-a {
-  left: -18vmax;
-  top: -10vmax;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255, 253, 247, 0.94), transparent 24%),
-    radial-gradient(circle at 64% 32%, rgba(243, 122, 45, 0.72), transparent 35%),
-    radial-gradient(circle at 66% 70%, rgba(217, 79, 105, 0.62), transparent 42%),
-    radial-gradient(circle at 28% 76%, rgba(239, 196, 71, 0.72), transparent 36%);
-}
-
-.fluid-layer-b {
-  right: -22vmax;
-  top: 8vmax;
-  background:
-    radial-gradient(circle at 38% 34%, rgba(255, 253, 247, 0.9), transparent 20%),
-    radial-gradient(circle at 30% 70%, rgba(65, 109, 76, 0.58), transparent 38%),
-    radial-gradient(circle at 68% 58%, rgba(21, 95, 145, 0.45), transparent 42%),
-    radial-gradient(circle at 72% 24%, rgba(239, 196, 71, 0.5), transparent 32%);
-}
-
-.fluid-layer-c {
-  left: 18vmax;
-  bottom: -26vmax;
-  width: 96vmax;
-  height: 62vmax;
-  background:
-    radial-gradient(circle at 22% 44%, rgba(239, 196, 71, 0.54), transparent 34%),
-    radial-gradient(circle at 52% 38%, rgba(255, 253, 247, 0.72), transparent 22%),
-    radial-gradient(circle at 72% 50%, rgba(21, 95, 145, 0.34), transparent 40%),
-    radial-gradient(circle at 42% 72%, rgba(217, 79, 105, 0.34), transparent 42%);
-}
-
-.fluid-texture {
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(0deg, rgba(23, 19, 15, 0.035) 0 1px, transparent 1px 7px),
-    radial-gradient(circle at 50% 8%, rgba(255, 253, 247, 0.5), transparent 36%),
-    linear-gradient(180deg, rgba(247, 245, 238, 0.48), rgba(247, 245, 238, 0.9));
-  mix-blend-mode: soft-light;
-}
-
 .site-nav {
   position: sticky;
   top: 0;
@@ -932,6 +871,7 @@ main,
 
 .preview-collection-row {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
 }
 
 .preview-item {
@@ -953,13 +893,18 @@ main,
 }
 
 .collection-card.compact {
+  position: relative;
+  isolation: isolate;
   width: 100%;
   min-width: 0;
   flex: initial;
+  overflow: hidden;
 }
 
 .collection-card.compact .media-slot {
-  min-height: 220px;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 4 / 3 !important;
 }
 
 .matarazzo-preview {
@@ -967,10 +912,26 @@ main,
   border-bottom: 1px solid var(--line);
 }
 
+.matarazzo-preview .section-heading {
+  grid-template-columns: minmax(0, 0.72fr) minmax(280px, 0.42fr);
+  align-items: center;
+}
+
+.matarazzo-preview .section-heading h2 {
+  max-width: 9ch;
+  font-size: clamp(3rem, 6vw, 5.8rem);
+}
+
+.matarazzo-preview .section-aside {
+  position: relative;
+  z-index: 1;
+}
+
 .matarazzo-preview-grid {
   display: grid;
   grid-template-columns: 1.2fr 0.9fr 0.9fr;
   gap: 14px;
+  align-items: start;
 }
 
 .matarazzo-preview .matarazzo-card {

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
-  useMotionTemplate,
   useScroll,
   useSpring,
   useTransform,
@@ -21,6 +20,7 @@ import {
   hasSanityConfig,
   urlFor,
 } from "./lib/sanityClient.js";
+import FluidBackground from "./components/FluidBackground.jsx";
 
 const navItems = [
   ["sobre", "Sobre"],
@@ -114,36 +114,6 @@ function ProgressBar() {
   });
 
   return <motion.div className="progress-bar" style={{ scaleX }} />;
-}
-
-function FluidBackdrop() {
-  const shouldReduceMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll();
-  const xA = useTransform(scrollYProgress, [0, 1], ["-8vw", "12vw"]);
-  const yA = useTransform(scrollYProgress, [0, 1], ["-8vh", "18vh"]);
-  const xB = useTransform(scrollYProgress, [0, 1], ["10vw", "-10vw"]);
-  const yB = useTransform(scrollYProgress, [0, 1], ["18vh", "-10vh"]);
-  const xC = useTransform(scrollYProgress, [0, 1], ["-4vw", "8vw"]);
-  const yC = useTransform(scrollYProgress, [0, 1], ["22vh", "-4vh"]);
-  const scaleA = useTransform(scrollYProgress, [0, 1], [1, 1.24]);
-  const scaleB = useTransform(scrollYProgress, [0, 1], [1.14, 0.96]);
-  const rotateA = useTransform(scrollYProgress, [0, 1], [-8, 18]);
-  const rotateB = useTransform(scrollYProgress, [0, 1], [12, -14]);
-  const hue = useTransform(scrollYProgress, [0, 1], [0, 18]);
-  const filter = useMotionTemplate`blur(26px) saturate(1.25) hue-rotate(${hue}deg)`;
-
-  return (
-    <motion.div
-      className="fluid-backdrop"
-      style={shouldReduceMotion ? undefined : { filter }}
-      aria-hidden="true"
-    >
-      <motion.div className="fluid-layer fluid-layer-a" style={shouldReduceMotion ? undefined : { x: xA, y: yA, scale: scaleA, rotate: rotateA }} />
-      <motion.div className="fluid-layer fluid-layer-b" style={shouldReduceMotion ? undefined : { x: xB, y: yB, scale: scaleB, rotate: rotateB }} />
-      <motion.div className="fluid-layer fluid-layer-c" style={shouldReduceMotion ? undefined : { x: xC, y: yC }} />
-      <div className="fluid-texture" />
-    </motion.div>
-  );
 }
 
 function Reveal({ children, className = "", delay = 0, as = "div" }) {
@@ -399,14 +369,25 @@ function ScrollToTop() {
 }
 
 function Nav() {
+  const scrollHomeTop = () => {
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    });
+  };
+
   return (
     <nav className="site-nav" aria-label="Navegação principal">
-      <Link className="nav-brand" to="/">
+      <Link className="nav-brand" to="/" onClick={scrollHomeTop}>
         Nicole Kvsh
       </Link>
       <div className="nav-links">
         {pageNavItems.map(([href, label]) => (
-          <NavLink key={href} to={href} end={href === "/"}>
+          <NavLink
+            key={href}
+            to={href}
+            end={href === "/"}
+            onClick={href === "/" ? scrollHomeTop : undefined}
+          >
             {label}
           </NavLink>
         ))}
@@ -937,7 +918,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ProgressBar />
-      <FluidBackdrop />
+      <FluidBackground />
       <a className="skip-link" href="#conteudo">
         Pular para o conteúdo
       </a>

@@ -1,0 +1,97 @@
+.fluid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 210, 170, 0.36), transparent 36%),
+    radial-gradient(circle at 82% 34%, rgba(132, 185, 170, 0.3), transparent 42%),
+    radial-gradient(circle at 50% 86%, rgba(239, 196, 71, 0.2), transparent 34%),
+    #f7f5ee;
+}
+
+.fluid-blob {
+  position: absolute;
+  width: 56vw;
+  height: 56vw;
+  min-width: 420px;
+  min-height: 420px;
+  border-radius: 999px;
+  filter: blur(84px);
+  opacity: 0.58;
+  mix-blend-mode: multiply;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+}
+
+.fluid-blob-1 {
+  top: -20%;
+  left: -16%;
+  background: rgba(243, 122, 45, 0.58);
+}
+
+.fluid-blob-2 {
+  top: 4%;
+  right: -20%;
+  background: rgba(82, 144, 158, 0.52);
+}
+
+.fluid-blob-3 {
+  bottom: -22%;
+  left: 18%;
+  background: rgba(239, 196, 71, 0.42);
+}
+
+.fluid-blob-4 {
+  right: 10%;
+  bottom: 6%;
+  background: rgba(217, 79, 105, 0.34);
+}
+
+.fluid-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(23, 19, 15, 0.1) 0 1px, transparent 1px 7px),
+    repeating-radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 4px);
+}
+
+@media (max-width: 768px) {
+  .fluid-blob {
+    width: 88vw;
+    height: 88vw;
+    min-width: 280px;
+    min-height: 280px;
+    filter: blur(58px);
+    opacity: 0.5;
+  }
+
+  .fluid-blob-1 {
+    top: -12%;
+    left: -42%;
+  }
+
+  .fluid-blob-2 {
+    top: 20%;
+    right: -48%;
+  }
+
+  .fluid-blob-3 {
+    bottom: -16%;
+    left: 0;
+  }
+
+  .fluid-blob-4 {
+    right: -34%;
+    bottom: 20%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fluid-blob {
+    transition: none !important;
+  }
+}
