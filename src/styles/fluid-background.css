@@ -2,6 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 0;
+  isolation: isolate;
   overflow: hidden;
   pointer-events: none;
   background:
@@ -20,7 +21,7 @@
   border-radius: 999px;
   filter: blur(84px);
   opacity: 0.48;
-  mix-blend-mode: multiply;
+  mix-blend-mode: normal;
   will-change: transform, opacity;
   transform: translate3d(0, 0, 0);
 }
