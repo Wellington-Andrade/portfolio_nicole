@@ -116,13 +116,14 @@ function ProgressBar() {
   return <motion.div className="progress-bar" style={{ scaleX }} />;
 }
 
-function Reveal({ children, className = "", delay = 0, as = "div" }) {
+function Reveal({ children, className = "", delay = 0, as = "div", ...props }) {
   const Component = motion[as];
 
   return (
     <Component
+      {...props}
       className={className}
-      initial={{ opacity: 0, y: 28 }}
+      initial={{ opacity: 1, y: 0 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.22 }}
       transition={{ duration: 0.72, delay, ease: [0.22, 1, 0.36, 1] }}
@@ -393,6 +394,43 @@ function Nav() {
         ))}
         <a href="#contato">Contato</a>
       </div>
+    </nav>
+  );
+}
+
+function BottomRail() {
+  const { pathname } = useLocation();
+  const items = [
+    ["/", "Início"],
+    ["/galeria", "Galeria"],
+    ["/matarazzo", "Matarazzo"],
+    ["/colecoes", "Coleções"],
+    ["/extras", "Extras"],
+    ["#contato", "Contato"],
+  ];
+
+  return (
+    <nav className="bottom-rail" aria-label="Navegação secundária">
+      {items.map(([href, label], index) => {
+        const isHash = href.startsWith("#");
+        const isActive = !isHash && pathname === href;
+        const content = (
+          <>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <strong>{label}</strong>
+          </>
+        );
+
+        return isHash ? (
+          <a href={href} key={href}>
+            {content}
+          </a>
+        ) : (
+          <Link className={isActive ? "is-active" : ""} to={href} key={href}>
+            {content}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
@@ -722,7 +760,7 @@ function PageIntro({ eyebrow, title, text }) {
 
 function HomeGalleryPreview() {
   const { artworks, loading, error } = useArtworksData();
-  const previewArtworks = artworks.slice(0, 4);
+  const previewArtworks = artworks.slice(0, 5);
   const useFallback = !hasSanityConfig || (!loading && !error && previewArtworks.length === 0);
 
   return (
@@ -740,7 +778,7 @@ function HomeGalleryPreview() {
 
       <div className="preview-grid">
         {useFallback
-          ? fallbackGalleryItems.slice(0, 4).map(([label, title, shape], index) => (
+          ? fallbackGalleryItems.slice(0, 5).map(([label, title, shape], index) => (
               <Reveal as="figure" className="preview-item" key={label} delay={index * 0.04}>
                 <MediaSlot label={label} shape={shape} tone={index % 2 ? "cool" : "warm"} />
                 <figcaption>{title}</figcaption>
@@ -856,7 +894,7 @@ function HomePage() {
 
 function GalleryPage() {
   return (
-    <main id="conteudo" className="page-main">
+    <main id="conteudo" className="page-main gallery-page">
       <PageIntro
         eyebrow="Galeria"
         title="Obras"
@@ -869,7 +907,7 @@ function GalleryPage() {
 
 function CollectionsPage() {
   return (
-    <main id="conteudo" className="page-main">
+    <main id="conteudo" className="page-main collections-page">
       <Collections />
     </main>
   );
@@ -877,7 +915,7 @@ function CollectionsPage() {
 
 function MatarazzoPage() {
   return (
-    <main id="conteudo" className="page-main">
+    <main id="conteudo" className="page-main matarazzo-page">
       <Matarazzo />
     </main>
   );
@@ -885,7 +923,7 @@ function MatarazzoPage() {
 
 function ExtrasPage() {
   return (
-    <main id="conteudo" className="page-main">
+    <main id="conteudo" className="page-main extras-page">
       <PageIntro
         eyebrow="Extras"
         title="Entrevistas e vídeos"
@@ -896,7 +934,7 @@ function ExtrasPage() {
   );
 }
 
-function Contact() {
+function LegacyContact() {
   return (
     <footer id="contato" className="contact-section">
       <Reveal>
@@ -914,6 +952,46 @@ function Contact() {
   );
 }
 
+function Contact() {
+  return (
+    <footer id="contato" className="contact-section">
+      <div className="contact-copy">
+        <Reveal>
+          <p className="eyebrow">Contato</p>
+          <h2>Contato</h2>
+          <p>Vamos conversar sobre arte, projetos e colaboracoes.</p>
+        </Reveal>
+        <Reveal className="contact-links" delay={0.08}>
+          <a href="mailto:nicolekvsh.art@gmail.com">nicolekvsh.art@gmail.com</a>
+          <a href="https://www.instagram.com/nicole.kvsh" target="_blank" rel="noreferrer">
+            @nicole.kvsh
+          </a>
+        </Reveal>
+      </div>
+      <Reveal
+        as="form"
+        className="contact-form"
+        delay={0.12}
+        onSubmit={(event) => event.preventDefault()}
+      >
+        <label>
+          <span>Nome</span>
+          <input type="text" name="name" />
+        </label>
+        <label>
+          <span>E-mail</span>
+          <input type="email" name="email" />
+        </label>
+        <label>
+          <span>Mensagem</span>
+          <textarea name="message" rows="5" />
+        </label>
+        <button className="button primary" type="submit">Enviar mensagem</button>
+      </Reveal>
+    </footer>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -924,6 +1002,7 @@ export default function App() {
       </a>
       <ScrollToTop />
       <Nav />
+      <BottomRail />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/galeria" element={<GalleryPage />} />
