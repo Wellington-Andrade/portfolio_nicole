@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
@@ -211,17 +211,14 @@ function getArtworkLayout(image) {
   const ratio = dimensions?.aspectRatio || (width && height ? width / height : null);
 
   if (!ratio) {
-    return { orientation: "square", aspectRatio: undefined };
+    return "square";
   }
 
-  return {
-    orientation: ratio > 1.18 ? "landscape" : ratio < 0.86 ? "portrait" : "square",
-    aspectRatio: width && height ? `${width} / ${height}` : `${ratio} / 1`,
-  };
+  return ratio > 1.18 ? "landscape" : ratio < 0.86 ? "portrait" : "square";
 }
 
 function ArtworkImage({ image, name, index }) {
-  const { orientation, aspectRatio } = getArtworkLayout(image);
+  const orientation = getArtworkLayout(image);
   const imageUrl = urlFor(image)?.width(1200).quality(82).url();
 
   if (!imageUrl) {
@@ -235,10 +232,39 @@ function ArtworkImage({ image, name, index }) {
   }
 
   return (
-    <div className={`artwork-frame ${orientation}`} style={aspectRatio ? { aspectRatio } : undefined}>
+    <div className={`artwork-frame ${orientation}`}>
       <img src={imageUrl} alt={name} loading="lazy" decoding="async" />
     </div>
   );
+}
+
+function getGalleryColumnCount() {
+  if (typeof window === "undefined") return 4;
+  if (window.innerWidth <= 720) return 1;
+  if (window.innerWidth <= 1040) return 2;
+  return 4;
+}
+
+function useGalleryColumnCount() {
+  const [columnCount, setColumnCount] = useState(getGalleryColumnCount);
+
+  useEffect(() => {
+    const handleResize = () => setColumnCount(getGalleryColumnCount());
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return columnCount;
+}
+
+function splitIntoColumns(items, columnCount) {
+  const columns = Array.from({ length: columnCount }, () => []);
+
+  items.forEach((item, index) => {
+    columns[index % columnCount].push({ item, index });
+  });
+
+  return columns;
 }
 
 function Nav() {
@@ -323,6 +349,7 @@ function Gallery() {
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(hasSanityConfig);
   const [error, setError] = useState(null);
+  const columnCount = useGalleryColumnCount();
 
   useEffect(() => {
     if (!hasSanityConfig) return;
@@ -350,6 +377,14 @@ function Gallery() {
 
   const shouldUseFallback = !hasSanityConfig;
   const hasArtworks = artworks.length > 0;
+  const fallbackColumns = useMemo(
+    () => splitIntoColumns(fallbackGalleryItems, columnCount),
+    [columnCount],
+  );
+  const artworkColumns = useMemo(
+    () => splitIntoColumns(artworks, columnCount),
+    [artworks, columnCount],
+  );
 
   return (
     <section id="galeria" className="section gallery-section">
@@ -379,30 +414,42 @@ function Gallery() {
       ) : null}
 
       {shouldUseFallback || hasArtworks ? (
-        <div className="gallery-grid">
+        <div className="gallery-grid" style={{ "--gallery-columns": columnCount }}>
           {shouldUseFallback
-            ? fallbackGalleryItems.map(([label, title, shape], index) => (
-                <Reveal as="figure" className={`gallery-item ${shape}`} key={label} delay={(index % 4) * 0.04}>
-                  <MediaSlot label={label} shape={shape} tone={index % 3 === 0 ? "warm" : index % 3 === 1 ? "cool" : "green"} />
-                  <figcaption>
-                    <strong>{title}</strong>
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                  </figcaption>
-                </Reveal>
-              ))
-            : artworks.map((artwork, index) => {
-                const { orientation } = getArtworkLayout(artwork.image);
+            ? fallbackColumns.map((column, columnIndex) => (
+                <div className="gallery-column" key={`fallback-column-${columnIndex}`}>
+                  {column.map(({ item, index }) => {
+                    const [label, title, shape] = item;
 
-                return (
-                  <Reveal as="figure" className={`gallery-item ${orientation}`} key={artwork._id} delay={(index % 4) * 0.04}>
-                    <ArtworkImage image={artwork.image} name={artwork.name} index={index} />
-                    <figcaption>
-                      <strong>{artwork.name}</strong>
-                      <span>{String(index + 1).padStart(2, "0")}</span>
-                    </figcaption>
-                  </Reveal>
-                );
-              })}
+                    return (
+                      <Reveal as="figure" className={`gallery-item ${shape}`} key={label} delay={(index % 4) * 0.04}>
+                        <MediaSlot label={label} shape={shape} tone={index % 3 === 0 ? "warm" : index % 3 === 1 ? "cool" : "green"} />
+                        <figcaption>
+                          <strong>{title}</strong>
+                          <span>{String(index + 1).padStart(2, "0")}</span>
+                        </figcaption>
+                      </Reveal>
+                    );
+                  })}
+                </div>
+              ))
+            : artworkColumns.map((column, columnIndex) => (
+                <div className="gallery-column" key={`artwork-column-${columnIndex}`}>
+                  {column.map(({ item: artwork, index }) => {
+                    const orientation = getArtworkLayout(artwork.image);
+
+                    return (
+                      <Reveal as="figure" className={`gallery-item ${orientation}`} key={artwork._id} delay={(index % 4) * 0.04}>
+                        <ArtworkImage image={artwork.image} name={artwork.name} index={index} />
+                        <figcaption>
+                          <strong>{artwork.name}</strong>
+                          <span>{String(index + 1).padStart(2, "0")}</span>
+                        </figcaption>
+                      </Reveal>
+                    );
+                  })}
+                </div>
+              ))}
         </div>
       ) : null}
     </section>
