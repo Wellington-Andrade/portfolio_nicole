@@ -34,7 +34,7 @@ const navItems = [
 const pageNavItems = [
   ["/", "Início"],
   ["/galeria", "Galeria"],
-  ["/#matarazzo", "Matarazzo"],
+  ["/matarazzo", "Matarazzo"],
   ["/colecoes", "Coleções"],
   ["/extras", "Extras"],
 ];
@@ -119,22 +119,29 @@ function ProgressBar() {
 function FluidBackdrop() {
   const shouldReduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll();
-  const y = useTransform(scrollYProgress, [0, 1], ["-7%", "7%"]);
-  const scale = useTransform(scrollYProgress, [0, 1], [1.08, 1.18]);
-  const rotate = useTransform(scrollYProgress, [0, 1], [-1.5, 1.5]);
+  const xA = useTransform(scrollYProgress, [0, 1], ["-8vw", "12vw"]);
+  const yA = useTransform(scrollYProgress, [0, 1], ["-8vh", "18vh"]);
+  const xB = useTransform(scrollYProgress, [0, 1], ["10vw", "-10vw"]);
+  const yB = useTransform(scrollYProgress, [0, 1], ["18vh", "-10vh"]);
+  const xC = useTransform(scrollYProgress, [0, 1], ["-4vw", "8vw"]);
+  const yC = useTransform(scrollYProgress, [0, 1], ["22vh", "-4vh"]);
+  const scaleA = useTransform(scrollYProgress, [0, 1], [1, 1.24]);
+  const scaleB = useTransform(scrollYProgress, [0, 1], [1.14, 0.96]);
+  const rotateA = useTransform(scrollYProgress, [0, 1], [-8, 18]);
+  const rotateB = useTransform(scrollYProgress, [0, 1], [12, -14]);
   const hue = useTransform(scrollYProgress, [0, 1], [0, 18]);
-  const filter = useMotionTemplate`blur(22px) saturate(1.34) hue-rotate(${hue}deg)`;
+  const filter = useMotionTemplate`blur(26px) saturate(1.25) hue-rotate(${hue}deg)`;
 
   return (
     <motion.div
       className="fluid-backdrop"
-      style={shouldReduceMotion ? undefined : { y, scale, rotate, filter }}
+      style={shouldReduceMotion ? undefined : { filter }}
       aria-hidden="true"
     >
-      <video autoPlay muted loop playsInline preload="auto">
-        <source src="/assets/m2-res_404p.mp4" type="video/mp4" />
-      </video>
-      <div className="fluid-backdrop-wash" />
+      <motion.div className="fluid-layer fluid-layer-a" style={shouldReduceMotion ? undefined : { x: xA, y: yA, scale: scaleA, rotate: rotateA }} />
+      <motion.div className="fluid-layer fluid-layer-b" style={shouldReduceMotion ? undefined : { x: xB, y: yB, scale: scaleB, rotate: rotateB }} />
+      <motion.div className="fluid-layer fluid-layer-c" style={shouldReduceMotion ? undefined : { x: xC, y: yC }} />
+      <div className="fluid-texture" />
     </motion.div>
   );
 }
@@ -440,7 +447,6 @@ function FeaturedArtwork({ artwork, loading }) {
 function Hero({ featuredArtwork, featuredLoading }) {
   return (
     <header id="inicio" className="hero">
-      <FluidHero />
       <div className="hero-copy">
         <Reveal>
           <p className="eyebrow">Portfólio artístico</p>
@@ -453,9 +459,9 @@ function Hero({ featuredArtwork, featuredLoading }) {
             <Link className="button primary" to="/galeria">
               Ver galeria
             </Link>
-            <a className="button" href="#matarazzo">
+            <Link className="button" to="/matarazzo">
               Projeto Matarazzo
-            </a>
+            </Link>
           </div>
         </Reveal>
       </div>
@@ -501,7 +507,7 @@ function Intro() {
   );
 }
 
-function Gallery() {
+function Gallery({ showHeading = true }) {
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(hasSanityConfig);
   const [error, setError] = useState(null);
@@ -543,7 +549,7 @@ function Gallery() {
   );
 
   return (
-    <section id="galeria" className="section gallery-section">
+    <section id="galeria" className={`section gallery-section ${showHeading ? "" : "is-page-content"}`}>
       <div className="section-heading">
         <Reveal>
           <p className="eyebrow">Galeria</p>
@@ -681,11 +687,11 @@ function Matarazzo() {
   );
 }
 
-function Extras() {
+function Extras({ showHeading = true }) {
   const [active, setActive] = useState("entrevistas");
 
   return (
-    <section id="extras" className="section extras-section">
+    <section id="extras" className={`section extras-section ${showHeading ? "" : "is-page-content"}`}>
       <div className="section-heading">
         <Reveal>
           <p className="eyebrow">Extras</p>
@@ -739,7 +745,7 @@ function HomeGalleryPreview() {
   const useFallback = !hasSanityConfig || (!loading && !error && previewArtworks.length === 0);
 
   return (
-    <section className="section home-preview">
+    <section id="inicio-galeria" className="section home-preview">
       <div className="section-heading">
         <Reveal>
           <p className="eyebrow">Galeria</p>
@@ -772,7 +778,7 @@ function HomeGalleryPreview() {
 
 function HomeCollectionsPreview() {
   return (
-    <section className="section home-preview">
+    <section id="inicio-colecoes" className="section home-preview">
       <div className="section-heading">
         <Reveal>
           <p className="eyebrow">Coleções</p>
@@ -799,9 +805,37 @@ function HomeCollectionsPreview() {
   );
 }
 
+function HomeMatarazzoPreview() {
+  return (
+    <section id="inicio-matarazzo" className="section home-preview matarazzo-preview">
+      <div className="section-heading">
+        <Reveal>
+          <p className="eyebrow">Matarazzo</p>
+          <h2>Projeto especial em desenvolvimento.</h2>
+        </Reveal>
+        <Reveal className="section-aside" delay={0.08}>
+          <p>Uma chamada para a exposição, com a página própria reservada para fotos, vídeos, bastidores e entrevistas captadas no local.</p>
+          <Link className="text-link" to="/matarazzo">Abrir Matarazzo</Link>
+        </Reveal>
+      </div>
+      <div className="matarazzo-preview-grid">
+        {matarazzoPlan.slice(0, 3).map(([title, text], index) => (
+          <Reveal as="article" className="matarazzo-card" key={title} delay={index * 0.05}>
+            <MediaSlot label={title} shape={index === 0 ? "wide" : "square"} tone={index % 2 ? "cool" : "warm"} />
+            <div>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function HomeExtrasPreview() {
   return (
-    <section className="section home-preview">
+    <section id="inicio-extras" className="section home-preview">
       <div className="section-heading">
         <Reveal>
           <p className="eyebrow">Extras</p>
@@ -833,7 +867,7 @@ function HomePage() {
       <Intro />
       <HomeGalleryPreview />
       <HomeCollectionsPreview />
-      <Matarazzo />
+      <HomeMatarazzoPreview />
       <HomeExtrasPreview />
     </main>
   );
@@ -847,7 +881,7 @@ function GalleryPage() {
         title="Obras"
         text="Acervo em expansão, carregado diretamente do Sanity. Novas obras publicadas entram aqui sem mexer no código."
       />
-      <Gallery />
+      <Gallery showHeading={false} />
     </main>
   );
 }
@@ -855,12 +889,15 @@ function GalleryPage() {
 function CollectionsPage() {
   return (
     <main id="conteudo" className="page-main">
-      <PageIntro
-        eyebrow="Coleções"
-        title="Séries de trabalho"
-        text="Organização por coleções, com espaço para expandir cada série conforme o acervo for sendo cadastrado."
-      />
       <Collections />
+    </main>
+  );
+}
+
+function MatarazzoPage() {
+  return (
+    <main id="conteudo" className="page-main">
+      <Matarazzo />
     </main>
   );
 }
@@ -873,7 +910,7 @@ function ExtrasPage() {
         title="Entrevistas e vídeos"
         text="Materiais complementares: entrevistas, campanhas, registros de ateliê e aparições em outros contextos."
       />
-      <Extras />
+      <Extras showHeading={false} />
     </main>
   );
 }
@@ -909,6 +946,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/galeria" element={<GalleryPage />} />
+        <Route path="/matarazzo" element={<MatarazzoPage />} />
         <Route path="/colecoes" element={<CollectionsPage />} />
         <Route path="/extras" element={<ExtrasPage />} />
         <Route path="*" element={<HomePage />} />
